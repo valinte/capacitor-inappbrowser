@@ -673,15 +673,22 @@ fileprivate extension WKWebViewController {
     }
 
     @objc func doneDidClick(sender: AnyObject) {
-        var canDismiss = true
-        if let url = self.source?.url {
-            canDismiss = delegate?.webViewController?(self, canDismiss: url) ?? true
-        }
-        if canDismiss {
-            //            UIDevice.current.setValue(Int(UIInterfaceOrientation.portrait.rawValue), forKey: "orientation")
-            self.capBrowserPlugin?.notifyListeners("closeEvent", data: ["url": webView?.url?.absoluteString ?? ""])
-            dismiss(animated: true, completion: nil)
-        }
+        let alert = UIAlertController(title: "Confirm Close", message: "You can not access this survey again, your progress will be lost. Are you sure?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { _ in
+            var canDismiss = true
+
+            if let url = self.source?.url {
+                canDismiss = self.delegate?.webViewController?(self, canDismiss: url) ?? true
+            }
+
+            if canDismiss {
+                self.capBrowserPlugin?.notifyListeners("closeEvent", data: ["url": self.webView?.url?.absoluteString ?? ""])
+                self.dismiss(animated: true, completion: nil)
+            }
+        }))
+
+        self.present(alert, animated: true, completion: nil)
     }
 
     @objc func customDidClick(sender: BlockBarButtonItem) {
